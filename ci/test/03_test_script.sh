@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2018-present The Bitcoin Core developers
+# Copyright (c) 2018-present The Bvcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -38,7 +38,7 @@ echo "=== END env ==="
   # The statistic bytes_written is only used for logging, which is disabled in
   # CI, so as a temporary minimal fix to work around UB and CI failures, leave
   # bytes_written unmodified.
-  # See https://github.com/bitcoin/bitcoin/pull/28359#issuecomment-1698694748
+  # See https://github.com/bvcoin/bitcoin/pull/28359#issuecomment-1698694748
   # Tee patch to stdout to make it clear CI is testing modified code.
   tee >(patch -p1) <<'EOF'
 --- a/src/leveldb/db/db_impl.cc
@@ -87,7 +87,7 @@ fi
 if [ "$CI_OS_NAME" == "macos" ]; then
   echo > "${HOME}/Library/Application Support/Bitcoin"
 else
-  echo > "${HOME}/.bitcoin"
+  echo > "${HOME}/.bvcoin"
 fi
 
 if [ -z "$NO_DEPENDS" ]; then
@@ -102,12 +102,12 @@ if [ "$DOWNLOAD_PREVIOUS_RELEASES" = "true" ]; then
   test/get_previous_releases.py -b -t "$PREVIOUS_RELEASES_DIR"
 fi
 
-BITCOIN_CONFIG_ALL="-DBUILD_BENCH=ON -DBUILD_FUZZ_BINARY=ON"
+BVCOIN_CONFIG_ALL="-DBUILD_BENCH=ON -DBUILD_FUZZ_BINARY=ON"
 if [ -z "$NO_DEPENDS" ]; then
-  BITCOIN_CONFIG_ALL="${BITCOIN_CONFIG_ALL} -DCMAKE_TOOLCHAIN_FILE=$DEPENDS_DIR/$HOST/toolchain.cmake"
+  BVCOIN_CONFIG_ALL="${BVCOIN_CONFIG_ALL} -DCMAKE_TOOLCHAIN_FILE=$DEPENDS_DIR/$HOST/toolchain.cmake"
 fi
 if [ -z "$NO_WERROR" ]; then
-  BITCOIN_CONFIG_ALL="${BITCOIN_CONFIG_ALL} -DWERROR=ON"
+  BVCOIN_CONFIG_ALL="${BVCOIN_CONFIG_ALL} -DWERROR=ON"
 fi
 
 ccache --zero-stats
@@ -118,13 +118,13 @@ BASE_BUILD_DIR=${BASE_BUILD_DIR:-$BASE_SCRATCH_DIR/build-$HOST}
 mkdir -p "${BASE_BUILD_DIR}"
 cd "${BASE_BUILD_DIR}"
 
-BITCOIN_CONFIG_ALL="$BITCOIN_CONFIG_ALL -DENABLE_EXTERNAL_SIGNER=ON -DCMAKE_INSTALL_PREFIX=$BASE_OUTDIR"
+BVCOIN_CONFIG_ALL="$BVCOIN_CONFIG_ALL -DENABLE_EXTERNAL_SIGNER=ON -DCMAKE_INSTALL_PREFIX=$BASE_OUTDIR"
 
 if [[ "${RUN_TIDY}" == "true" ]]; then
-  BITCOIN_CONFIG_ALL="$BITCOIN_CONFIG_ALL -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+  BVCOIN_CONFIG_ALL="$BVCOIN_CONFIG_ALL -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 fi
 
-bash -c "cmake -S $BASE_ROOT_DIR $BITCOIN_CONFIG_ALL $BITCOIN_CONFIG || ( (cat $(cmake -P "${BASE_ROOT_DIR}/ci/test/GetCMakeLogFiles.cmake")) && false)"
+bash -c "cmake -S $BASE_ROOT_DIR $BVCOIN_CONFIG_ALL $BITCOIN_CONFIG || ( (cat $(cmake -P "${BASE_ROOT_DIR}/ci/test/GetCMakeLogFiles.cmake")) && false)"
 
 bash -c "cmake --build . $MAKEJOBS --target all $GOAL" || ( echo "Build failure. Verbose build follows." && cmake --build . --target all "$GOAL" --verbose ; false )
 
@@ -159,13 +159,13 @@ if [ "$RUN_FUNCTIONAL_TESTS" = "true" ]; then
 fi
 
 if [ "${RUN_TIDY}" = "true" ]; then
-  cmake -B /tidy-build -DLLVM_DIR=/usr/lib/llvm-"${TIDY_LLVM_V}"/cmake -DCMAKE_BUILD_TYPE=Release -S "${BASE_ROOT_DIR}"/contrib/devtools/bitcoin-tidy
+  cmake -B /tidy-build -DLLVM_DIR=/usr/lib/llvm-"${TIDY_LLVM_V}"/cmake -DCMAKE_BUILD_TYPE=Release -S "${BASE_ROOT_DIR}"/contrib/devtools/bvcoin-tidy
   cmake --build /tidy-build "$MAKEJOBS"
   cmake --build /tidy-build --target bitcoin-tidy-tests "$MAKEJOBS"
 
   set -eo pipefail
   cd "${BASE_BUILD_DIR}/src/"
-  if ! ( run-clang-tidy-"${TIDY_LLVM_V}" -quiet -load="/tidy-build/libbitcoin-tidy.so" "${MAKEJOBS}" | tee tmp.tidy-out.txt ); then
+  if ! ( run-clang-tidy-"${TIDY_LLVM_V}" -quiet -load="/tidy-build/libbvcoin-tidy.so" "${MAKEJOBS}" | tee tmp.tidy-out.txt ); then
     grep -C5 "error: " tmp.tidy-out.txt
     echo "^^^ ⚠️ Failure generated from clang-tidy"
     false
@@ -177,7 +177,7 @@ if [ "${RUN_TIDY}" = "true" ]; then
   cd "${BASE_ROOT_DIR}"
   python3 "/include-what-you-use/iwyu_tool.py" \
            -p "${BASE_BUILD_DIR}" "${MAKEJOBS}" \
-           -- -Xiwyu --cxx17ns -Xiwyu --mapping_file="${BASE_ROOT_DIR}/contrib/devtools/iwyu/bitcoin.core.imp" \
+           -- -Xiwyu --cxx17ns -Xiwyu --mapping_file="${BASE_ROOT_DIR}/contrib/devtools/iwyu/bvcoin.core.imp" \
            -Xiwyu --max_line_length=160 \
            2>&1 | tee /tmp/iwyu_ci.out
   cd "${BASE_ROOT_DIR}/src"
