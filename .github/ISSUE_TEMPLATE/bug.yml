@@ -1,4 +1,4 @@
-name: BVcoin
+name: Bvcoin
 description: Submit a new bug report.
 labels: [bug]
 body:
@@ -57,7 +57,7 @@ body:
       required: false
   - type: dropdown
     attributes:
-      label: How did you obtain Bitcoin Core
+      label: How did you obtain Bvcoin Core
       multiple: false
       options:
         - Compiled from source
@@ -69,8 +69,8 @@ body:
   - type: input
     id: core-version
     attributes:
-      label: What version of Bitcoin Core are you using?
-      description: Run `bitcoind --version` or in Bitcoin-QT use `Help > About Bitcoin Core`
+      label: What version of Bvcoin Core are you using?
+      description: Run `BVcoind --version` or in Bvcoin-QT use `Help > About Bvcoin Core`
       placeholder: e.g. v24.0.1 or master@e1bf547
     validations:
       required: true
